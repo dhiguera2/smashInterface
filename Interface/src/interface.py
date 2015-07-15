@@ -9,7 +9,7 @@ import numpy as np
 import time
 import tkinter as tk
 from tkinter import ttk
-
+# COUCOU
 i=0
 voltage = [8.8, 8.9, 8.8, 9, 8.9, 9.2, 9.1, 9.0, 8.8]
 
