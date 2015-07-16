@@ -11,8 +11,9 @@ import time
 import tkinter as tk
 from tkinter import ttk
 
-i=0
-voltage = [8.8, 8.9, 8.8, 9, 8.9, 9.2, 9.1, 9.0, 8.8]
+
+voltage = [8.8, 8.9, 8.8, 9.0, 8.9, 9.2, 9.1, 9.0, 8.8]
+current = [0.9, 0.8, 0.9, 1.0, 0.9, 1.2, 1.1, 1.2, 1.0]
 
 LARGE_FONT= ("Verdana", 12)
 style.use("ggplot")
@@ -190,20 +191,19 @@ class PageOne(tk.Frame):
         info_frame.grid(row=4,column=4,padx=20,sticky = "nsew")
         
     
-        label_info = tk.Label(info_frame, text="Informations", font=LARGE_FONT)
+        label_info = tk.Label(info_frame, text="Information", font=LARGE_FONT)
         label_info.grid(row=0,column=0,pady=10,columnspan=2,sticky = "nsew")
         
         
-        entry_time = tk.Label(info_frame)
-        entry_time["text"]= "to be done"
-        entry_time.grid(row=1,column=1,pady=10,sticky = "nsew")
+        output_time = tk.Label(info_frame)
+        output_time.grid(row=1,column=1,pady=10,sticky = "nsew")
         
         
-        entry_current = ttk.Entry(info_frame,state=DISABLED)
-        entry_current.grid(row=2,column=1,pady=10,sticky = "nsew")
+        output_current = tk.Label(info_frame)
+        output_current.grid(row=2,column=1,pady=10,sticky = "nsew")
         
-        entry_voltage = ttk.Entry(info_frame)
-        entry_voltage.grid(row=3,column=1,pady=10,sticky = "nsew")
+        output_voltage = tk.Label(info_frame)
+        output_voltage.grid(row=3,column=1,pady=10,sticky = "nsew")
         
         label_time = tk.Label(info_frame, text="Time", font=14)
         label_time.grid(row=1,column=0,pady=10,sticky = "nsew")
@@ -213,6 +213,21 @@ class PageOne(tk.Frame):
         
         label_voltage = tk.Label(info_frame, text="Voltage", font=14)
         label_voltage.grid(row=3,column=0,pady=10,sticky = "nsew")
+        
+        
+        def updateData():
+        
+            if Param.i==8:
+                Param.i=0
+            now = time.strftime("%H:%M:%S")
+            output_time.configure(text=now)
+            output_voltage.configure(text=str(voltage[Param.i]))
+            output_current.configure(text=str(current[Param.i]))
+            Param.i += 1
+            self.master.after(1000, updateData)
+            return
+            
+        updateData()
 
 
 class PageTwo(tk.Frame):
@@ -239,20 +254,20 @@ class PageTwo(tk.Frame):
         self.label1.pack()
         self.label2 = tk.Label(self, text="Voltage: ", font=LARGE_FONT)
         self.label2.pack()
-        self.updateData()
+        #self.updateData()
         
         
      
-    def updateData(self):
-        
-        if Param.i==8:
-            Param.i=0
-        now = time.strftime("%H:%M:%S")
-        self.label1.configure(text=now)
-        self.label2.configure(text="Voltage: " + str(voltage[Param.i]))
-        Param.i += 1
-        print(Param.i)
-        self.master.after(1000, self.updateData)
+    #def updateData(self):
+     #   
+      #  if Param.i==8:
+      #      Param.i=0
+      #  now = time.strftime("%H:%M:%S")
+      #  self.label1.configure(text=now)
+      #  self.label2.configure(text="Voltage: " + str(voltage[Param.i]))
+      #  Param.i += 1
+      #  print(Param.i)
+      #  self.master.after(1000, self.updateData)
 
 
 class PageThree(tk.Frame):
