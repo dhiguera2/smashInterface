@@ -4,6 +4,7 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
+from tkinter.constants import DISABLED
 from matplotlib import style
 import numpy as np
 import time
@@ -65,10 +66,20 @@ class SeaofBTCapp(tk.Tk):
         container.pack(side="top", fill="both", expand = True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
+        
+        menubar = tk.Menu(container)
+        filemenu = tk.Menu(menubar,tearoff=0)
+        filemenu.add_command(label="Read Me", command=lambda: self.show_frame(ReadMe))
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit",command=quit)
+        menubar.add_cascade(label="File",menu=filemenu)
+        
+        
+        tk.Tk.config(self, menu=menubar)
 
         self.frames = {}
 
-        for F in (StartPage, PageOne, PageTwo, PageThree):
+        for F in (StartPage, PageOne, PageTwo, PageThree,ReadMe):
 
             frame = F(container, self)
 
@@ -103,52 +114,105 @@ class StartPage(tk.Frame):
                             command=lambda: controller.show_frame(PageThree))
         button3.pack()
 
-
+class ReadMe(tk.Frame):
+    
+    def __init__(self, parent, controller):
+        
+        tk.Frame.__init__(self,parent)
+        button1 = ttk.Button(self, text="Back to Home",
+                            command=lambda: controller.show_frame(StartPage))
+        button1.pack(pady=10)
+        label = tk.Label(self, text="Read Me", font=LARGE_FONT)
+        label.pack(pady=10)
+        
+        textReadMe = tk.Text(self,width=80,height=30)
+        pullReadMe = open("ReadMe.txt","r").read()
+        textReadMe.insert('1.0',pullReadMe)
+        textReadMe.config(state=DISABLED)
+        textReadMe.pack()
+        
+     
 class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        
         label = tk.Label(self, text="Exponential Graph", font=LARGE_FONT)
-        label.pack(pady=10,padx=10)
+        label.grid(row=0,column=0,columnspan=5 , sticky = "nsew")
 
         button1 = ttk.Button(self, text="Back to Home",
                             command=lambda: controller.show_frame(StartPage))
-        button1.pack()
+        button1.grid(row=1,column=2,pady=10,padx=50,sticky = "nsew")
+        
+        
+        
+        
+        self.functionEntry = ttk.Entry(self, text="a=?")
+        self.functionEntry.grid(row=3,column=2,padx=10,sticky = "nsew")
+         
+        label2 = ttk.Label(self, text="y = exp(ax)", font=LARGE_FONT)
+        label2.grid(row=3,column=1,padx=10,sticky = "nsew")
 
-        button2 = ttk.Button(self, text="Information",
-                            command=lambda: controller.show_frame(PageTwo))
-        button2.pack()
         
-        button3 = ttk.Button(self, text="Real-time Graph",
-                            command=lambda: controller.show_frame(PageThree))
-        button3.pack()
+        self.canvas = FigureCanvasTkAgg(f2, self)
+        self.canvas.show()
+        self.canvas.get_tk_widget().grid_forget()
+        self.canvas.get_tk_widget().grid(row=4,column=0,columnspan=3,sticky = "nsew")
+
+
+        toolbar_frame = tk.Frame(self)
+        toolbar_frame.grid(row=5,column=0,columnspan=3,sticky = "nsew")
         
-        label2 = tk.Label(self, text="m =", font=LARGE_FONT)
-        label2.pack(pady=10,padx=10)
-        
-        entry = tk.Entry(self, bd =5)
-        entry.pack()
+        toolbar = NavigationToolbar2TkAgg(self.canvas, toolbar_frame)
+        toolbar.update()
         
         def changeParam():
-            Param.m = float(entry.get())
+            Param.m = float(self.functionEntry.get())
             y = np.exp(Param.m*x)
             a2.clear()
             a2.plot(x,y)
-            canvas.draw()
+            self.canvas.draw()
             return
             
+        button2 = ttk.Button(self,text="Calculate", 
+                             command= changeParam )
+        button2.grid(row=3,column=0,padx=10,sticky = "nsew")
         
-        button4 = ttk.Button(self, text="Update graph",
-                            command= changeParam )
-        button4.pack()
+    
         
-        canvas = FigureCanvasTkAgg(f2, self)
-        canvas.show()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-
-        toolbar = NavigationToolbar2TkAgg(canvas, self)
-        toolbar.update()
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.createFrame()
+        #self.updateData()
+        
+        
+    def createFrame(self):
+        
+        info_frame = tk.Frame(self)
+        info_frame.grid(row=4,column=4,padx=20,sticky = "nsew")
+        
+    
+        label_info = tk.Label(info_frame, text="Informations", font=LARGE_FONT)
+        label_info.grid(row=0,column=0,pady=10,columnspan=2,sticky = "nsew")
+        
+        
+        entry_time = tk.Label(info_frame)
+        entry_time["text"]= "to be done"
+        entry_time.grid(row=1,column=1,pady=10,sticky = "nsew")
+        
+        
+        entry_current = ttk.Entry(info_frame,state=DISABLED)
+        entry_current.grid(row=2,column=1,pady=10,sticky = "nsew")
+        
+        entry_voltage = ttk.Entry(info_frame)
+        entry_voltage.grid(row=3,column=1,pady=10,sticky = "nsew")
+        
+        label_time = tk.Label(info_frame, text="Time", font=14)
+        label_time.grid(row=1,column=0,pady=10,sticky = "nsew")
+        
+        label_current = tk.Label(info_frame, text="Current", font=14)
+        label_current.grid(row=2,column=0,pady=10,sticky = "nsew")
+        
+        label_voltage = tk.Label(info_frame, text="Voltage", font=14)
+        label_voltage.grid(row=3,column=0,pady=10,sticky = "nsew")
 
 
 class PageTwo(tk.Frame):
@@ -218,6 +282,7 @@ class PageThree(tk.Frame):
         toolbar = NavigationToolbar2TkAgg(canvas, self)
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        
         
 
 app = SeaofBTCapp()
