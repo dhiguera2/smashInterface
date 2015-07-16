@@ -1,8 +1,10 @@
 import sys
 from cx_Freeze import setup, Executable
 
+
 # Dependencies are automatically detected, but it might need fine tuning.
-build_exe_options = {"packages": ["os"], "excludes": ["tkinter"]}
+includefiles = ['ReadMe.txt','sampleTest.txt']
+build_exe_options = { "includes": ["tkinter","matplotlib","numpy","time"]}
 
 # GUI applications require a different base on Windows (the default is for a
 # console application).
@@ -13,5 +15,5 @@ if sys.platform == "win32":
 setup(  name = "interface",
         version = "0.1",
         description = "My GUI application!",
-        options = {"build_exe": build_exe_options},
+        options = {"build.exe": build_exe_options },
         executables = [Executable("interface.py", base=base)])
