@@ -4,4 +4,3 @@ import py2exe
 #importlib.import_module('mpl_toolkits').__path__
 
 setup(console=["interface.py"])
-
