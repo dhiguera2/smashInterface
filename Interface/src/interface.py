@@ -1,4 +1,5 @@
 ##
+import serial
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -11,6 +12,14 @@ import time
 import tkinter as tk
 from tkinter import ttk
 
+ser = serial.Serial(
+    parity=serial.PARITY_ODD,
+    stopbits=serial.STOPBITS_ONE,
+    bytesize=serial.EIGHTBITS
+)
+ser.close()
+comm_off_on = True
+counter_cmd = 0
 
 voltage = [8.8, 8.9, 8.8, 9.0, 8.9, 9.2, 9.1, 9.0, 8.8]
 current = [0.9, 0.8, 0.9, 1.0, 0.9, 1.2, 1.1, 1.2, 1.0]
@@ -135,6 +144,8 @@ class ReadMe(tk.Frame):
      
 class PageOne(tk.Frame):
 
+    
+    
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         
@@ -143,11 +154,8 @@ class PageOne(tk.Frame):
 
         button1 = ttk.Button(self, text="Back to Home",
                             command=lambda: controller.show_frame(StartPage))
-        button1.grid(row=1,column=2,pady=10,padx=50,sticky = "nsew")
-        
-        
-        
-        
+        button1.grid(row=0,column=4,pady=10,padx=50,sticky = "nsew")
+
         self.functionEntry = ttk.Entry(self, text="a=?")
         self.functionEntry.grid(row=3,column=2,padx=10,sticky = "nsew")
          
@@ -181,11 +189,180 @@ class PageOne(tk.Frame):
         
     
         
-        self.createFrame()
+        self.createFrameInfo()
+        self.createFrameComm()
+        self.createFrameCommand()
         #self.updateData()
+    def createFrameComm(self):
+    
+        
+        comm_frame = tk.Frame(self)
+        comm_frame.grid(row=1,column=0,padx=20,sticky = "nsew")
+       
+        labelComm = tk.Label(comm_frame,text='Port :')
+        labelComm.grid(row=0,column=0,padx=10,sticky = "nsew")
+        
+        entryComm = tk.Entry(comm_frame)
+        entryComm.insert(0, 'COM7')
+        entryComm.grid(row=0,column=1,padx=10,sticky = "nsew")
+        
+        labelBaud = tk.Label(comm_frame,text='Baud :')
+        labelBaud.grid(row=1,column=0,padx=10,sticky = "nsew")
+        
+        entryBaud = tk.Entry(comm_frame)
+        entryBaud.insert(0, '38400')
+        entryBaud.grid(row=1,column=1,padx=10,sticky = "nsew")
+        
+        self.buttonComm = tk.Button(comm_frame)
+        def go_comm(): 
+            global comm_off_on
+            global ser  
+            
+            if comm_off_on:
+                print('Connection on: '+ entryComm.get() +", Baud= "+ entryBaud.get()) 
+                ser.baudrate = entryBaud.get()
+                ser.port = entryComm.get()
+                ser.open()
+                if ser.isOpen():
+                    self.buttonComm.config(bg='green')
+                    comm_off_on=False
+                    
+                
+            else:
+                print('Connection off')
+                self.buttonComm.config(bg='red')
+                comm_off_on=True 
+                ser.close()
+ 
+ 
+        self.buttonComm.config(text="Connection On/Off",command=go_comm,bg='red')
+        self.buttonComm.grid(row=2,column=0,columnspan=2,pady=10,padx=50,sticky = "nsew")
+        
+        return
+    
+    def createFrameCommand(self):
+        
+        command_frame= tk.Frame(self)
+        command_frame.grid(row=1,column=1,padx=20,sticky = "nsew")
+        
+        def go_science_mode():
+            global counter_cmd
+            # Header of GRIPS
+            header = self.header_grips()            
+            # Payload cmd science
+            checksum_cmd = 231
+            cmd_science = 24
+            payload_cmd_science =self.do_cmd_payload(cmd_science, checksum_cmd)
+            
+            
+            cmd_science = header + payload_cmd_science 
+            ser.write(cmd_science)
+            print(ser.read(100))
+            counter_cmd+=1
+         
+        def go_safe_mode():
+            global counter_cmd
+            # Header of GRIPS
+            header = self.header_grips()            
+            # Payload cmd science
+            checksum_cmd = 234
+            cmd_science = 21
+            payload_cmd_safe=self.do_cmd_payload(cmd_science, checksum_cmd)
+            
+            cmd_safe = header + payload_cmd_safe
+            ser.write(cmd_safe)
+            print(ser.read(100))
+            counter_cmd+=1
+        
+
+        buttonSc = ttk.Button(command_frame, text="Science mode",
+                            command=go_science_mode)
+        buttonSc.grid(row=1,column=0,padx=10,sticky = "nsew")
+        
+        buttonSafe = ttk.Button(command_frame, text="Safe mode",
+                            command=go_safe_mode)
+        buttonSafe.grid(row=2,column=0,padx=10,sticky = "nsew")
+        
+        buttonHk = ttk.Button(command_frame, text="Send HK packet",
+                            command=self.send_hkpacket_beacon)
+        buttonHk.grid(row=3,column=0,padx=10,sticky = "nsew")
+        
+        return
+    
+    def header_grips(self):
+        global counter_cmd
+        # header Grips
+        sync1= 0xEB
+        sync2 = 0x90
+        sysid = 0xC0
+        checksum_high=0x00
+        checksum_low=0x00
+        cmd_type = 0x04
+        size_payload_low = 8
+        size_payload_high = 0
+        
+        header = [sync2, sync1, checksum_low ,checksum_high, sysid ,cmd_type, 
+                           size_payload_low ,size_payload_high ,
+                           counter_cmd,0 ,0 ,0, 0, 0, 0 ,0] # timer and checksum = 0    
         
         
-    def createFrame(self):
+         
+        return header
+    
+    def send_hkpacket_beacon(self):
+        global counter_cmd
+        global ser
+
+        cmd_hkbeacon_list =  self.header_grips()   + self.do_cmd_payload(254,1)
+        ser.write(cmd_hkbeacon_list)
+        print(ser.read(50))
+        counter_cmd+=1 
+              
+    def do_cmd_payload(self,cmd,chk):
+        # Payload cmd science
+        apid_low = 0x00
+        apid_high = 0x05
+        sequence_count_low = 0
+        sequence_count_high = 0
+        length_high=0
+        length_low=0
+        checksum_cmd = chk     
+        payload_cmd = [apid_high ,apid_low ,
+                                   sequence_count_high, sequence_count_low,
+                                   length_high, length_low, checksum_cmd, 
+                                   cmd ,255, 255]
+            
+        return payload_cmd
+            
+    def _readline(self):
+        global ser
+        eol = b'\r'
+        leneol = len(eol)
+        line = bytearray()
+        while True:
+            c = self.ser.read(1)
+            if c:
+                line += c
+                if line[-leneol:] == eol:
+                    break
+                else:
+                    break
+        return bytes(line)
+        
+        
+    
+        
+    def fletcher8(self,msg):
+        ckA = 0;
+        ckB = 0;
+        
+        for a in range (0, len(msg)):
+            ckA += msg[a]
+            ckB += ckA
+            
+        return [ckA,ckB]    
+    
+    def createFrameInfo(self):
         
         info_frame = tk.Frame(self)
         info_frame.grid(row=4,column=4,padx=20,sticky = "nsew")
@@ -216,7 +393,7 @@ class PageOne(tk.Frame):
         
         
         def updateData():
-        
+            global ser
             if Param.i==8:
                 Param.i=0
             now = time.strftime("%H:%M:%S")
@@ -225,6 +402,9 @@ class PageOne(tk.Frame):
             output_current.configure(text=str(current[Param.i]))
             Param.i += 1
             self.master.after(1000, updateData)
+            #if ser.isOpen():
+              #  ser.read(200)
+            
             return
             
         updateData()
@@ -300,6 +480,8 @@ class PageThree(tk.Frame):
         
         
 
+
 app = SeaofBTCapp()
 ani = animation.FuncAnimation(f, animate, interval=1000)
 app.mainloop()
+
