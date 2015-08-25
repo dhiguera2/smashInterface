@@ -330,7 +330,7 @@ class PageOne(tk.Frame):
         payload_cmd = [apid_high ,apid_low ,
                                    sequence_count_high, sequence_count_low,
                                    length_high, length_low, checksum_cmd, 
-                                   cmd ,255, 255]
+                                   cmd ,0xF5, 0xF5]
             
         return payload_cmd
             
