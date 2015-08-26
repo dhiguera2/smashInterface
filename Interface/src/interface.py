@@ -1,6 +1,7 @@
 ##
 import serial
 import matplotlib
+from binascii import crc32
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
@@ -315,7 +316,7 @@ class PageOne(tk.Frame):
 
         cmd_hkbeacon_list =  self.header_grips()   + self.do_cmd_payload(254,1)
         ser.write(cmd_hkbeacon_list)
-        print(ser.read(50))
+        print(self.readBuffer())
         counter_cmd+=1 
               
     def do_cmd_payload(self,cmd,chk):
@@ -348,8 +349,43 @@ class PageOne(tk.Frame):
                 else:
                     break
         return bytes(line)
+    
+    def readBuffer(self):
+        global ser
+        packet = bytearray()
+        flag = True
+        b1 = 0x00
         
-        
+        # start reading when sync bytes found
+        while self.ser.inWaiting() != 0:
+            b2 = self.ser.read(1)
+            if b1 == 0xEB:
+                if b2 == 0x90:
+                    packet += b1
+                    packet += b2
+                    break
+            if b2 == 0xEB:
+                    b1 = 0xEB
+            else:
+                b1 = self.ser.read(1)
+                             
+        # keep reading until 0xF5F5 found
+        b1 = self.ser.read(1)
+        packet += b1
+        while self.ser.inWaiting() != 0:
+            b2 = self.ser.read(1)
+            packet += b2
+            if b1 == 0xF5:
+                if b2 == 0xF5:
+                    break
+            if b2 == 0xF5:
+                b1 = 0xF5
+            else:
+               b1 = self.ser.read(1) 
+               packet += b1
+               
+        return bytes(packet)
+                
     
         
     def fletcher8(self,msg):
@@ -360,7 +396,23 @@ class PageOne(tk.Frame):
             ckA += msg[a]
             ckB += ckA
             
-        return [ckA,ckB]    
+        return [ckA,ckB]
+    
+    def crc16(self,msg):
+        crc = 0xFFFF;
+        
+        for pos in range (0, len(msg)):
+            crc ^= msg[pos]
+            
+            for i in range (8, 0, -1):
+                if ((crc & 0x0001) != 0):
+                    crc >>= 1
+                    crc ^= 0xA001
+                else:
+                    crc >>= 1
+                    
+        return crc
+    
     
     def createFrameInfo(self):
         
