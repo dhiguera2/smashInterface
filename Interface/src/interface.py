@@ -354,12 +354,11 @@ class PageOne(tk.Frame):
     def readBuffer(self):
         global ser
         packet = bytearray()
-        flag = True
         b1 = 0x00
         
         # start reading when sync bytes found
-        while self.ser.inWaiting() != 0:
-            b2 = self.ser.read(1)
+        while ser.inWaiting() != 0:
+            b2 = ser.read(1)
             if b1 == 0xEB:
                 if b2 == 0x90:
                     packet += b1
@@ -368,13 +367,13 @@ class PageOne(tk.Frame):
             if b2 == 0xEB:
                     b1 = 0xEB
             else:
-                b1 = self.ser.read(1)
+                b1 = ser.read(1)
                              
         # keep reading until 0xF5F5 found
-        b1 = self.ser.read(1)
+        b1 = ser.read(1)
         packet += b1
-        while self.ser.inWaiting() != 0:
-            b2 = self.ser.read(1)
+        while ser.inWaiting() != 0:
+            b2 = ser.read(1)
             packet += b2
             if b1 == 0xF5:
                 if b2 == 0xF5:
@@ -382,7 +381,7 @@ class PageOne(tk.Frame):
             if b2 == 0xF5:
                 b1 = 0xF5
             else:
-               b1 = self.ser.read(1) 
+               b1 = ser.read(1) 
                packet += b1
                
         return bytes(packet)
