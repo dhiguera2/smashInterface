@@ -350,6 +350,7 @@ class PageOne(tk.Frame):
                     break
         return bytes(line)
     
+    
     def readBuffer(self):
         global ser
         packet = bytearray()
