@@ -360,7 +360,7 @@ class PageOne(tk.Frame):
         while ser.inWaiting() == 0:
             time.sleep(1) 
         
-        while ser.inWaiting() != 0:
+        while ser.inWaiting() != 0: #test
             b2 = ser.read(1)
             print(b2)
             if b1 == b'\x90':
