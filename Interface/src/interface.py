@@ -358,32 +358,9 @@ class PageOne(tk.Frame):
         
         # start reading when sync bytes found
         while ser.inWaiting() == 0:
-            time.sleep(1)
+            time.sleep(1) 
         
         while ser.inWaiting() != 0:
-            '''
-            b1 = ser.read()
-            print('0')
-            print(b1)
-            x=b1
-            print(x)
-            if  (b1) == b'\x90':
-                b2 = ser.read()
-                print('01')
-                print(b2)
-                if (b2)== b'\xeb':
-                    packet += b1
-                    print('1')
-                    print(b1)
-                    packet += b2
-                    print('2')
-                    print(b2)
-                    break
-                    
-            
-           
-            
-            '''
             b2 = ser.read(1)
             print(b2)
             if b1 == b'\x90':
