@@ -354,38 +354,79 @@ class PageOne(tk.Frame):
     def readBuffer(self):
         global ser
         packet = bytearray()
-        flag = True
         b1 = 0x00
         
         # start reading when sync bytes found
-        while self.ser.inWaiting() != 0:
-            b2 = self.ser.read(1)
-            if b1 == 0xEB:
-                if b2 == 0x90:
+        while ser.inWaiting() == 0:
+            time.sleep(1)
+        
+        while ser.inWaiting() != 0:
+            '''
+            b1 = ser.read()
+            print('0')
+            print(b1)
+            x=b1
+            print(x)
+            if  (b1) == b'\x90':
+                b2 = ser.read()
+                print('01')
+                print(b2)
+                if (b2)== b'\xeb':
                     packet += b1
+                    print('1')
+                    print(b1)
                     packet += b2
+                    print('2')
+                    print(b2)
                     break
-            if b2 == 0xEB:
-                    b1 = 0xEB
+                    
+            
+           
+            
+            '''
+            b2 = ser.read(1)
+            print(b2)
+            if b1 == b'\x90':
+                if b2 == b'\xeb':
+                    packet += b1
+                    print('1')
+                    print(b1)
+                    packet += b2
+                    print('2')
+                    print(b2)
+                    break
+            if b2 == b'\x90':
+                    b1 = b'\x90'
             else:
-                b1 = self.ser.read(1)
+                b1 = ser.read(1)
                              
         # keep reading until 0xF5F5 found
-        b1 = self.ser.read(1)
+        b1 = ser.read(1)
+        print('3')
+        print(b1)
         packet += b1
-        while self.ser.inWaiting() != 0:
-            b2 = self.ser.read(1)
+        
+        while ser.inWaiting() == 0:
+            time.sleep(1)
+            
+        while ser.inWaiting() != 0:
+            b2 = ser.read(1)
+            print('4')
+            print(b2)
             packet += b2
-            if b1 == 0xF5:
-                if b2 == 0xF5:
+            if b1 == b'\xf5':
+                if b2 == b'\xf5':
                     break
-            if b2 == 0xF5:
-                b1 = 0xF5
+            if b2 == b'\xf5':
+                b1 = b'\xf5'
             else:
-               b1 = self.ser.read(1) 
-               packet += b1
+                b1 = ser.read(1) 
+                print('5')
+                print(b1)
+                packet += b1
+                
                
-        return bytes(packet)
+        return packet
                 
     
         
